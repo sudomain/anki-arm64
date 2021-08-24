@@ -1,0 +1,86 @@
+on: [push]
+
+jobs:
+  aarch64_job:
+    # The host should always be Linux
+    runs-on: ubuntu-20.04
+    name: Build on ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2.1.0
+      - uses: uraimo/run-on-arch-action@v2.0.5
+        name: Run commands
+        id: runcmd
+        with:
+          arch: aarch64
+          distro: ubuntu20.04
+
+          # Not required, but speeds up builds by storing container images in
+          # a GitHub package registry.
+          githubToken: ${{ github.token }}
+
+          # Create an artifacts directory
+          setup: |
+            mkdir -p "${PWD}/artifacts"
+          
+          # Mount the artifacts directory as /artifacts in the container
+          dockerRunArgs: |
+            --volume "${PWD}/artifacts:/artifacts"
+
+          env: | # YAML, but pipe character is necessary
+            artifact_name: anki-2.1.47-aarch64.tar.gz
+
+          # The shell to run commands with in the container
+          shell: /bin/sh
+
+          install: |
+                apt-get update -q -y 
+                apt-get install -q -y apt-utils
+                apt-get install -q -y git
+                apt-get install -q -y rsync
+                apt-get install -q -y findutils
+                apt-get install -q -y curl
+                apt-get install -q -y gcc
+                apt-get install -q -y g++
+                apt-get install -q -y rustc
+                apt-get install -q -y cargo
+                apt-get install -q -y nodejs
+                apt-get install -q -y python3
+                apt-get install -q -y python3-pip
+                apt-get install -q -y python3-pyqt5
+                apt-get install -q -y pyqt5-dev-tools
+                apt-get install -q -y python-is-python3
+          
+          run: |
+            export BAZELISK_VER=1.9.0
+            curl -L https://github.com/bazelbuild/bazelisk/releases/download/v${BAZELISK_VER}/bazelisk-linux-arm64 -o ./bazel
+            chmod +x bazel && mv bazel /usr/local/bin/
+            git clone --depth=1 https://github.com/ankitects/anki
+            cd anki
+            echo "build --action_env=PYTHON_SITE_PACKAGES=/usr/lib/python3/dist-packages" >> user.bazelrc
+            rm -rf bazel-dist
+            
+            bazel build -k --config opt dist
+            cd bazel-bin
+
+            tar -zczf "/artifacts/${artifact_name}" .
+            echo "Produced artifact at /artifacts/${artifact_name}"
+            
+            ls -al
+
+      - name: Show the artifact
+        # Items placed in /artifacts in the container will be in
+        # ${PWD}/artifacts on the host.
+        run: |
+          ls -al "${PWD}/artifacts"
+          cd "${PWD}/artifacts"
+          tar -xzvf anki-2.1.47-aarch64.tar.gz
+          tar -xvf dist.tar
+          cd bazel-dist
+          ls -la
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v0.0.1-ubuntu20.04
+          artifacts: ${{ github.workspace }}/artifacts/bazel-dist/*.whl
+          token: ${{ secrets.GITHUB_TOKEN }}
