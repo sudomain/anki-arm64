@@ -30,6 +30,16 @@ pip install aqt-2.1.47-py3-none-any.whl
 anki
 ```
 
+### 5. Add shortcut 
+Download this repository and copy anki.desktop to `/usr/share/applications/` and copy anki.png to `/usr/share/pixmaps/`.
+
+Also command can be run to copy these files.
+
+```
+mv anki.desktop /usr/share/applications/anki.desktop
+mv anki.png /usr/share/pixmaps/anki.png
+```
+
 ## Install latest Anki on Ubuntu 20.04
 ### 1. Install required packages
 ```
@@ -57,6 +67,17 @@ pip install aqt-2.1.47-py3-none-any.whl
 ```
 anki
 ```
+
+### 5. Add shortcut 
+Download this repository and copy anki.desktop to `/usr/share/applications/` and copy anki.png to `/usr/share/pixmaps/`.
+
+Also command can be run to copy these files.
+
+```
+mv anki.desktop /usr/share/applications/anki.desktop
+mv anki.png /usr/share/pixmaps/anki.png
+```
+
 
 # Building latest Anki from source
 ## Build on Arch Linux
