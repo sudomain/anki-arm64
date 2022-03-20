@@ -1,6 +1,9 @@
 #!/bin/sh
 # Commands needed to run once to install Anki in a proot-distro OS. Keeps the run script faster
 
+# Hopefully prevent install problems caused by powersaving modes (wake-unlock should be at bottom if this script)
+termux-wake-lock
+
 # $1 - logs in as a particular user in the proot (note root is the root user in the proot, not android)
 # $@ - command(s) to run as that user
 run_command_in_proot (){
@@ -13,7 +16,7 @@ run_command_in_proot (){
 # Package(s) needed in vanilla Termux
 TERMUX_PACKAGES="proot-distro"
 
-# proot-distro distribution to install. At the time of this writing, every option has a wrong version of libc that anki needs, with the exception of Ubuntu. This could change.
+# proot-distro distribution to install. At the time of this writing, every distro has a wrong version of libc that anki needs, with the exception of Ubuntu. This will eventually change (ideally `debian` eventually).
 DISTRO="ubuntu"
 
 # User to install anki under in the proot environment. Probably only useful to existing proot-distro users that have $DISTRO installed
@@ -30,8 +33,7 @@ proot-distro install "$DISTRO"
 
 # Qt (and thus Anki) doesn't like running as an user named root, even if it is a fake root like proot.
 run_command_in_proot root adduser --disabled-password --gecos "" "$ANKI_INSTALL_USER"
-run_command_in_proot "$ANKI_INSTALL_USER" mkdir -p "$ANKI_USER_BIN" &&
-cp ~/anki-arm64/termux-proot-distro-install/run-anki.sh "$PREFIX/var/lib/proot-distro/installed-rootfs/$DISTRO$ANKI_USER_BIN"
+run_command_in_proot "$ANKI_INSTALL_USER" mkdir -p "$ANKI_USER_BIN" && cp ~/anki-arm64/termux-proot-distro-install/run-anki.sh "$PREFIX/var/lib/proot-distro/installed-rootfs/$DISTRO$ANKI_USER_BIN"
 
 
 # Dependencies for Anki under Ubuntu (different distros may not come with the same packages Ubuntu does or have packages with slightly different names). Anki requires an X server at minumum and a somewhat intuitive window manager to be useable. My preference for the X server is tigervnc and to connect to it with a VNC client for Android. For the window manager, xfwm4 fron Xfce will do. Customization/use of lighter-weight software can be done here.
@@ -48,7 +50,9 @@ run_command_in_proot "$ANKI_INSTALL_USER" python3.9 -m venv --system-site-packag
 # The following is recommended by  the instructions above, but seems to be broken. Can be uncommented once this is fixed: https://github.com/pypa/pip/issues/10887
 #run_command_in_proot "$ANKI_INSTALL_USER" pyenv/bin/pip install --upgrade pip
 
-# note adding --pre flag after pip install will get the latest beta. without it, get the latest stable 
-run_command_in_proot "$ANKI_INSTALL_USER" pyenv/bin/pip install --upgrade aqt
+#TODO remove the --pre flag when Anki 2.1.50 becomes stable. --pre installs the latest beta instead of the latest stable. At the time of this writing, the only version(s) of Anki supported on ARM64 are a beta for 2.1.50.
+run_command_in_proot "$ANKI_INSTALL_USER" pyenv/bin/pip install --upgrade --pre aqt
 
-#TODO handle existing users upgrading their anki using pip
+#TODO handle existing users upgrading their anki using pip (or does pip handle this itself?)
+
+termux-wake-unlock

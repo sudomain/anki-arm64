@@ -148,3 +148,46 @@ After build completed, there are two wheel file in bazel-dist which can be share
 aqt-2.1.47-py3-none-any.whl
 anki-2.1.47-cp38-abi3-manylinux2014_aarch64.whl
 ```
+
+## Install in Termux PRoot environment and connect to the desktop using VNC
+This repo contains a shell script to install Anki in a PRoot environment (similar chroot without root privileges) in Termux.
+
+Disclaimer: To get Anki to work in this environment, Qt's GPU rendering and security sandbox need to be disabled. Because of this, if there's malicious code in your collection or an add-on, it could cause damage to your collection. Running Anki with the sandbox disabled means you accept the risk that damage could be done to your collection. Keep backups handy. Disabling the sandbox (and thus this warning) may not be necessary when Anki upgrades to Qt version 6.2.
+
+Installing Anki in a PRoot will require a few GB's of internal storage because a full OS (Ubuntu), desktop environment (Xfce), and Anki (and thus Qt) will be installed. Consider that this doesn't even include your collection and media. A small VNC server (tigervnc) will also be installed in order to access the desktop and Anki, but remote connections are disabled by default using the `-localhost` option. Also consider turning off your mobile data and use wifi for the duration of the install. 
+
+### 1. Install and open Termux
+Termux:Widgets can be installed if you want an icon on your homescreen rather than typing the command in step 3 each time.
+
+### 2. Execute the following code to download and run the install script.
+If you're prompted to configure your timezone (for `tzdata` package) or keyboard layout, you can configure them if you wish or ignore them by pressing `CTRL` +  `d`.
+
+If you're not an existing Termux user, it's ok to select `Y` or `Yes` if you're prompted to upgrade packages or replace default config files. If you're already a Termux user, this script doesn't touch your config files but sometimes changes are made by Termux maintainers via apt.
+
+```
+pkg upgrade && pkg in git ;
+git clone --depth 1 https://github.com/infinyte7/anki-arm64 ;
+bash ~/anki-arm64/termux-proot-distro-install/install.sh
+```
+If any of the above commands fail, check your internet connection and run again.
+
+### 3. Execute the following code to run Anki.
+The first time you do this, you will be asked to create a password for the VNC server. Keep this password as it will be needed by VNC client needed in the next step. If you configured a custom user, change `abki-user`. If this project switches from ubuntu to another proot-distro, change `ubuntu`.
+
+```
+proot-distro login --user anki-user ubuntu -- sh bin/run-anki.sh
+```
+
+The above command can be put in a script for Termux:Widget to avoid copy/pasting it each time. Follow Termux:Widget instructions for this.
+
+### 4. Install a VNC client app
+FOSS options include AVNC and MultiVNC. Try both- they have very different controls.
+
+### 5. Connect to the local VNC server using the VNC client app.
+Settings:
+Address: `localhost` or `127.0.0.1`
+Port: `5901
+Password: `Password you created in step 3`
+
+### Uninstalling
+If you have no other use for Termux, uninstalling the app will remove everything installed by this install script. If you want to keep Termux but uninstall Anki and its dependencies, run `proot-distro uninstall DISTRO` where DISTRO is the Linux distro installed by this script (currently `ubuntu`).
